@@ -1,0 +1,44 @@
+﻿@model List<NimapTestApp.Models.Product>
+
+@{
+    ViewData["Title"] = "Product List";
+}
+
+<h2>Product List</h2>
+<a asp-action="Create" class="btn btn-primary">Add New Product</a>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ProductId</th>
+            <th>ProductName</th>
+            <th>CategoryId</th>
+            <th>CategoryName</th> 
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td>@product.ProductId</td>
+                <td>@product.ProductName</td>
+                <td>@product.CategoryId</td>
+                <td>@product.Category?.CategoryName</td> 
+                <td>
+                    <a asp-action="Edit" asp-route-id="@product.ProductId" class="btn btn-warning">Edit</a>
+                    <a asp-action="Delete" asp-route-id="@product.ProductId" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</<table>
+
+<!-- Pagination -->
+<div>
+    <a asp-action="Index" asp-route-page="@(ViewBag.Page - 1)" class="btn btn-secondary @(ViewBag.Page == 1? "disabled" : "")">Previous</a>
+    Page @ViewBag.Page of @ViewBag.TotalPages
+    <a asp-action="Index" asp-route-page="@(ViewBag.Page + 1)" class="btn btn-secondary @(ViewBag.Page >= ViewBag.TotalPages ? "disabled":"")">Next</a>
+</div>
+
+
+
