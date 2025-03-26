@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NimapTestApp.Data;
+using NimapTestApp.Services;
 
 namespace NimapTestApp
 {
@@ -13,6 +14,7 @@ namespace NimapTestApp
             builder.Services.AddControllersWithViews();
             builder.Services.AddMvc();
             builder.Services.AddDbContext<ApplicationDbContext>(item => item.UseSqlServer(builder.Configuration.GetConnectionString("myconn")));
+            builder.Services.AddScoped<ICategoryServices, CategoryService>();
 
             var app = builder.Build();
 

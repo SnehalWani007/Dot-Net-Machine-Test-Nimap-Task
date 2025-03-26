@@ -9,6 +9,6 @@ namespace NimapTestApp.Models
         public int CategoryId { get; set; }
         [Required]
         public string? CategoryName { get; set; }
-        public List<Product>? Products { get; set; }
+        public List<Product> Products { get; set; } = new List<Product>();
     }
 }

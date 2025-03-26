@@ -1,20 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NimapTestApp.Data;
 using NimapTestApp.Models;
-using System.Linq;
+using NimapTestApp.Services;
+using System.Threading.Tasks;
 
 namespace NimapTestApp.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _context;
-        public CategoryController(ApplicationDbContext context)
+        private readonly ICategoryServices _categoryServices;
+        public CategoryController(ICategoryServices categoryServices)
         {
-            _context = context;
+            _categoryServices = categoryServices;
         }
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View(_context.Categories.ToList());
+            var categories = await _categoryServices.GetCategories();
+            return View(categories);
         }
 
         public IActionResult Create()
@@ -23,40 +24,38 @@ namespace NimapTestApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(Category category)
+        public async Task<IActionResult> Create(Category category)
         {
             if(ModelState.IsValid)
             {
-                _context.Categories.Add(category);
-                _context.SaveChanges();
+                await _categoryServices.AddCategory(category);
                 return RedirectToAction("Index");
             }
             return View(category);
         } 
 
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            return View(_context.Categories.Find(id));
+            var category = await _categoryServices.GetCategoryById(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+            return View(category);
         }
         [HttpPost]
-        public IActionResult Edit(Category category)
+        public async Task<IActionResult> Edit(Category category)
         {
             if(ModelState.IsValid)
             {
-                _context.Categories.Update(category);
-                _context.SaveChanges();
+                await _categoryServices.UpdateCategory(category);
                 return RedirectToAction("Index");
             }
             return View(category);
         }
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var category = _context.Categories.Find(id);
-            if(category != null)
-            {
-                _context.Categories.Remove(category);
-                _context.SaveChanges();
-            }
+            await _categoryServices.DeleteCategory(id);
             return RedirectToAction("Index");
         }
     }
