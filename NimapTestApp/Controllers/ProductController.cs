@@ -1,32 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using NimapTestApp.Models;
+using NimapTestApp.Services;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using NimapTestApp.Data;
-using NimapTestApp.Models;
-using System.Linq;
 
 namespace NimapTestApp.Controllers
 {
     public class ProductController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IProductServices _productServices;
+        private readonly ICategoryServices _categoryServices;
 
-        public ProductController(ApplicationDbContext context)
+        public ProductController(IProductServices productServices, ICategoryServices categoryServices)
         {
-            _context = context;
+            _productServices = productServices;
+            _categoryServices = categoryServices;
+
         }
 
-        public IActionResult Index(int page = 1, int pageSize = 9)
+        public async Task<IActionResult> Index(int page = 1, int pageSize = 9)
         {
-            var totalRecords = _context.Products.Count();
-            var totalPages = (int)Math.Ceiling((double)totalRecords / pageSize);
-
-            var products = _context.Products
-                .Include(p => p.Category)
-                .OrderBy(p => p.ProductId)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            var products = await _productServices.GetProducts(page, pageSize);
+            var totalProducts = await _productServices.GetTotalProducts();
+            var totalPages = (int)Math.Ceiling((double)totalProducts / pageSize);
 
             ViewBag.Page = page;
             ViewBag.PageSize = pageSize;
@@ -35,52 +31,56 @@ namespace NimapTestApp.Controllers
             return View(products);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "CategoryName");
+            var categories = await _categoryServices.GetCategories();
+            ViewBag.Categories = categories.Select(c => new SelectListItem
+            {
+                Value = c.CategoryId.ToString(),
+                Text = c.CategoryName
+            }).ToList();
             return View();
         }
         [HttpPost]
-        public IActionResult Create(Product product)
+        public async Task<IActionResult> Create(Product product)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                _context.Products.Add(product);
-                _context.SaveChanges();
+                await _productServices.AddProduct(product);
                 return RedirectToAction("Index");
             }
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "CategoryName", product.CategoryId);
+            ViewBag.Categories = await _categoryServices.GetCategories();
             return View(product);
         }
 
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var product = _context.Products.Find(id);
+            var product = await _productServices.GetProductById(id);
             if (product == null) return NotFound();
 
-            ViewBag.Categories = new SelectList(_context.Categories, "CategoryId", "CategoryName", product.CategoryId);
-            return View(_context.Products.Find(id));
+            var categories = await _categoryServices.GetCategories();
+            ViewBag.Categories = categories.Select(c => new SelectListItem
+            {
+                Value = c.CategoryId.ToString(),
+                Text = c.CategoryName
+            }).ToList();
+            return View(product);
         }
         [HttpPost]
-        public IActionResult Edit(Product product)
+        public async Task<IActionResult> Edit(Product product)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
-                _context.Products.Update(product);
-                _context.SaveChanges();
+                await _productServices.UpdateProduct(product);
                 return RedirectToAction("Index");
             }
+            ViewBag.Categories = await _categoryServices.GetCategories();
             return View(product);
         }
 
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var product = _context.Products.Find(id);
-            if(product != null)
-            {
-                _context.Products.Remove(product);
-                _context.SaveChanges();
-            }
+            await _productServices.DeleteProduct(id);
             return RedirectToAction("Index");
         }
     }

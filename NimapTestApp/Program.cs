@@ -14,7 +14,9 @@ namespace NimapTestApp
             builder.Services.AddControllersWithViews();
             builder.Services.AddMvc();
             builder.Services.AddDbContext<ApplicationDbContext>(item => item.UseSqlServer(builder.Configuration.GetConnectionString("myconn")));
+
             builder.Services.AddScoped<ICategoryServices, CategoryService>();
+            builder.Services.AddScoped<IProductServices, ProductServices>();
 
             var app = builder.Build();
 
